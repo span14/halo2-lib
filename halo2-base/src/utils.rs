@@ -1,6 +1,7 @@
 #[cfg(feature = "halo2-pse")]
 use crate::halo2_proofs::arithmetic::CurveAffine;
-use crate::halo2_proofs::{arithmetic::FieldExt, circuit::Value};
+use crate::halo2_proofs::circuit::Value;
+use halo2curves::ff::{PrimeField, FromUniformBytes};
 use core::hash::Hash;
 use num_bigint::BigInt;
 use num_bigint::BigUint;
@@ -11,7 +12,7 @@ use num_traits::{One, Zero};
 /// Helper trait to represent a field element that can be converted into [u64] limbs.
 ///
 /// Note: Since the number of bits necessary to represent a field element is larger than the number of bits in a u64, we decompose the integer representation of the field element into multiple [u64] values e.g. `limbs`.
-pub trait ScalarField: FieldExt + Hash {
+pub trait ScalarField: PrimeField + Hash + Ord + FromUniformBytes<64> {
     /// Returns the base `2<sup>bit_len</sup>` little endian representation of the [ScalarField] element up to `num_limbs` number of limbs (truncates any extra limbs).
     ///
     /// Assumes `bit_len < 64`.
@@ -31,6 +32,27 @@ pub trait ScalarField: FieldExt + Hash {
         repr.as_mut()[..bytes.len()].copy_from_slice(bytes);
         Self::from_repr(repr).unwrap()
     }
+
+    /// Gets the least significant 128 bits of the field element.
+    fn get_lower_128(&self) -> u128 {
+        let bytes = self.to_bytes_le();
+        let mut lower_128 = 0u128;
+        for (i, byte) in bytes.into_iter().enumerate().take(16) {
+            lower_128 |= (byte as u128) << (i * 8);
+        }
+        lower_128
+    }
+
+    /// Gets the least significant 32 bits of the field element.
+    fn get_lower_32(&self) -> u32 {
+        let bytes = self.to_bytes_le();
+        let mut lower_32 = 0u32;
+        for (i, byte) in bytes.into_iter().enumerate().take(4) {
+            lower_32 |= (byte as u32) << (i * 8);
+        }
+        lower_32
+    }
+
 }
 // See below for implementations
 
@@ -104,7 +126,7 @@ pub fn log2_ceil(x: u64) -> usize {
 
 /// Returns the modulus of [BigPrimeField].
 pub fn modulus<F: BigPrimeField>() -> BigUint {
-    fe_to_biguint(&-F::one()) + 1u64
+    fe_to_biguint(&-F::ONE) + 1u64
 }
 
 /// Returns the [BigPrimeField] element of 2<sup>n</sup>.
@@ -309,7 +331,7 @@ mod scalar_field_impls {
     use num_bigint::BigUint;
 
     use super::{decompose_u64_digits_to_limbs, ScalarField};
-    use crate::halo2_proofs::halo2curves::FieldExt;
+    use halo2curves::ff::{PrimeField, FromUniformBytes};
     use std::hash::Hash;
 
     /// We do a blanket implementation in 'community-edition' to make it easier to integrate with other crates.
@@ -317,7 +339,7 @@ mod scalar_field_impls {
     /// ASSUMING F::Repr is little-endian
     impl<F> ScalarField for F
     where
-        F: FieldExt + Hash,
+        F: PrimeField + Hash + Ord + FromUniformBytes<64>,
     {
         #[inline(always)]
         fn to_u64_limbs(self, num_limbs: usize, bit_len: usize) -> Vec<u64> {

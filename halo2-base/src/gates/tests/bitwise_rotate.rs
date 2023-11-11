@@ -11,7 +11,7 @@ use crate::{
     utils::testing::{check_proof, gen_proof},
 };
 
-use halo2_proofs_axiom::halo2curves::FieldExt;
+use halo2curves::ff::PrimeField;
 use rand::rngs::OsRng;
 
 use super::*;

@@ -25,7 +25,7 @@ fn gate_tests<F: ScalarField>(ctx: &mut Context<F>, inputs: [F; 3]) {
     // test idx_to_indicator
     chip.idx_to_indicator(ctx, Constant(F::from(3u64)), 4);
 
-    let bits = ctx.assign_witnesses([F::zero(), F::one()]);
+    let bits = ctx.assign_witnesses([F::ZERO, F::ZERO]);
     chip.bits_to_indicator(ctx, &bits);
 
     chip.is_equal(ctx, b, a);

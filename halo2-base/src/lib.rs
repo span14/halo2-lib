@@ -409,7 +409,7 @@ impl<F: ScalarField> Context<F> {
         if let Some(zcell) = &self.zero_cell {
             return *zcell;
         }
-        let zero_cell = self.load_constant(F::zero());
+        let zero_cell = self.load_constant(F::ZERO);
         self.zero_cell = Some(zero_cell);
         zero_cell
     }

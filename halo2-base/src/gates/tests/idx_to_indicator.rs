@@ -4,6 +4,7 @@ use crate::{
         GateChip, GateInstructions,
     },
     halo2_proofs::{
+        arithmetic::Field,
         halo2curves::bn256::Fr,
         plonk::keygen_pk,
         plonk::{keygen_vk, Assigned},
@@ -12,7 +13,6 @@ use crate::{
     utils::testing::{check_proof, gen_proof},
     QuantumCell::Witness,
 };
-use ff::Field;
 use itertools::Itertools;
 use rand::{rngs::OsRng, thread_rng, Rng};
 

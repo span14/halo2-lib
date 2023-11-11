@@ -179,7 +179,7 @@ pub trait GateInstructions<F: ScalarField> {
         let a = a.into();
         let b = b.into();
         let out_val = *a.value() + b.value();
-        ctx.assign_region_last([a, b, Constant(F::one()), Witness(out_val)], [0])
+        ctx.assign_region_last([a, b, Constant(F::ONE), Witness(out_val)], [0])
     }
 
     /// Constrains and returns `a + b * (-1) = out`.
@@ -197,8 +197,8 @@ pub trait GateInstructions<F: ScalarField> {
         let a = a.into();
         let b = b.into();
         let out_val = *a.value() - b.value();
-        // slightly better to not have to compute -F::one() since F::one() is cached
-        ctx.assign_region([Witness(out_val), b, Constant(F::one()), a], [0]);
+        // slightly better to not have to compute -F::ONE since F::ONE is cached
+        ctx.assign_region([Witness(out_val), b, Constant(F::ONE), a], [0]);
         ctx.get(-4)
     }
 
@@ -232,7 +232,7 @@ pub trait GateInstructions<F: ScalarField> {
     fn neg(&self, ctx: &mut Context<F>, a: impl Into<QuantumCell<F>>) -> AssignedValue<F> {
         let a = a.into();
         let out_val = -*a.value();
-        ctx.assign_region([a, Witness(out_val), Constant(F::one()), Constant(F::zero())], [0]);
+        ctx.assign_region([a, Witness(out_val), Constant(F::ONE), Constant(F::ZERO)], [0]);
         ctx.get(-3)
     }
 
@@ -251,7 +251,7 @@ pub trait GateInstructions<F: ScalarField> {
         let a = a.into();
         let b = b.into();
         let out_val = *a.value() * b.value();
-        ctx.assign_region_last([Constant(F::zero()), a, b, Witness(out_val)], [0])
+        ctx.assign_region_last([Constant(F::ZERO), a, b, Witness(out_val)], [0])
     }
 
     /// Constrains and returns  `a * b + c = out`.
@@ -289,7 +289,7 @@ pub trait GateInstructions<F: ScalarField> {
     ) -> AssignedValue<F> {
         let a = a.into();
         let b = b.into();
-        let out_val = (F::one() - a.value()) * b.value();
+        let out_val = (F::ONE - a.value()) * b.value();
         ctx.assign_region_smart([Witness(out_val), a, b, b], [0], [(2, 3)], []);
         ctx.get(-4)
     }
@@ -300,7 +300,7 @@ pub trait GateInstructions<F: ScalarField> {
     /// * `ctx`: [Context] to add the constraints to
     /// * `x`: [QuantumCell] value to constrain
     fn assert_bit(&self, ctx: &mut Context<F>, x: AssignedValue<F>) {
-        ctx.assign_region([Constant(F::zero()), Existing(x), Existing(x), Existing(x)], [0]);
+        ctx.assign_region([Constant(F::ZERO), Existing(x), Existing(x), Existing(x)], [0]);
     }
 
     /// Constrains and returns a / b = 0.
@@ -322,7 +322,7 @@ pub trait GateInstructions<F: ScalarField> {
         // TODO: if really necessary, make `c` of type `Assigned<F>`
         // this would require the API using `Assigned<F>` instead of `F` everywhere, so leave as last resort
         let c = b.value().invert().unwrap() * a.value();
-        ctx.assign_region([Constant(F::zero()), Witness(c), b, a], [0]);
+        ctx.assign_region([Constant(F::ZERO), Witness(c), b, a], [0]);
         ctx.get(-3)
     }
 
@@ -406,7 +406,7 @@ pub trait GateInstructions<F: ScalarField> {
         let cells = iter::once(start).chain(a.flat_map(|a| {
             let a = a.into();
             sum += a.value();
-            [a, Constant(F::one()), Witness(sum)]
+            [a, Constant(F::ONE), Witness(sum)]
         }));
         ctx.assign_region_last(cells, (0..len).map(|i| 3 * i as isize))
     }
@@ -440,7 +440,7 @@ pub trait GateInstructions<F: ScalarField> {
         let cells = iter::once(start).chain(a.flat_map(|a| {
             let a = a.into();
             sum += a.value();
-            [a, Constant(F::one()), Witness(sum)]
+            [a, Constant(F::ONE), Witness(sum)]
         }));
         ctx.assign_region(cells, (0..len).map(|i| 3 * i as isize));
         Box::new((0..=len).rev().map(|i| ctx.get(-1 - 3 * (i as isize))))
@@ -507,13 +507,13 @@ pub trait GateInstructions<F: ScalarField> {
     ) -> AssignedValue<F> {
         let a = a.into();
         let b = b.into();
-        let not_b_val = F::one() - b.value();
+        let not_b_val = F::ONE - b.value();
         let out_val = *a.value() + b.value() - *a.value() * b.value();
         let cells = [
             Witness(not_b_val),
-            Constant(F::one()),
+            Constant(F::ONE),
             b,
-            Constant(F::one()),
+            Constant(F::ONE),
             b,
             a,
             Witness(not_b_val),
@@ -552,13 +552,13 @@ pub trait GateInstructions<F: ScalarField> {
     ) -> AssignedValue<F> {
         let a = a.into();
         let b = b.into();
-        let not_two_b_val = F::one() - F::from(2u64) * b.value();
+        let not_two_b_val = F::ONE - F::from(2u64) * b.value();
         let out_val = *a.value() + b.value() - F::from(2u64) * *a.value() * b.value();
         let cells = [
             Witness(not_two_b_val),
             Constant(F::from(2u64)),
             b,
-            Constant(F::one()),
+            Constant(F::ONE),
             b,
             a,
             Witness(not_two_b_val),
@@ -574,7 +574,7 @@ pub trait GateInstructions<F: ScalarField> {
     /// * `ctx`: [Context] to add the constraints to.
     /// * `a`: [QuantumCell] that contains a boolean value.
     fn not(&self, ctx: &mut Context<F>, a: impl Into<QuantumCell<F>>) -> AssignedValue<F> {
-        self.sub(ctx, Constant(F::one()), a)
+        self.sub(ctx, Constant(F::ONE), a)
     }
 
     /// Constrains and returns `sel ? a : b` assuming `sel` is boolean.
@@ -625,10 +625,10 @@ pub trait GateInstructions<F: ScalarField> {
         let (inv_last_bit, last_bit) = {
             ctx.assign_region(
                 [
-                    Witness(F::one() - bits[k - 1].value()),
+                    Witness(F::ONE - bits[k - 1].value()),
                     Existing(bits[k - 1]),
-                    Constant(F::one()),
-                    Constant(F::one()),
+                    Constant(F::ONE),
+                    Constant(F::ONE),
                 ],
                 [0],
             );
@@ -641,7 +641,7 @@ pub trait GateInstructions<F: ScalarField> {
         for (idx, bit) in bits.iter().rev().enumerate().skip(1) {
             for old_idx in 0..(1 << idx) {
                 // inv_prod_val = (1 - bit) * indicator[offset + old_idx]
-                let inv_prod_val = (F::one() - bit.value()) * indicator[offset + old_idx].value();
+                let inv_prod_val = (F::ONE - bit.value()) * indicator[offset + old_idx].value();
                 ctx.assign_region(
                     [
                         Witness(inv_prod_val),
@@ -682,19 +682,19 @@ pub trait GateInstructions<F: ScalarField> {
                     // unroll `is_zero` to make sure if `idx == Witness(_)` it is replaced by `Existing(_)` in later iterations
                     let x = idx.value();
                     let (is_zero, inv) = if x.is_zero_vartime() {
-                        (F::one(), Assigned::Trivial(F::one()))
+                        (F::ONE, Assigned::Trivial(F::ONE))
                     } else {
-                        (F::zero(), Assigned::Rational(F::one(), *x))
+                        (F::ZERO, Assigned::Rational(F::ONE, *x))
                     };
                     let cells = [
                         Witness(is_zero),
                         idx,
                         WitnessFraction(inv),
-                        Constant(F::one()),
-                        Constant(F::zero()),
+                        Constant(F::ONE),
+                        Constant(F::ZERO),
                         idx,
                         Witness(is_zero),
-                        Constant(F::zero()),
+                        Constant(F::ZERO),
                     ];
                     ctx.assign_region_smart(cells, [0, 4], [(0, 6), (1, 5)], []); // note the two `idx` need to be constrained equal: (1, 5)
                     idx = Existing(ctx.get(-3)); // replacing `idx` with Existing cell so future loop iterations constrain equality of all `idx`s
@@ -722,12 +722,12 @@ pub trait GateInstructions<F: ScalarField> {
     where
         Q: Into<QuantumCell<F>>,
     {
-        let mut sum = F::zero();
+        let mut sum = F::ZERO;
         let a = a.into_iter();
         let (len, hi) = a.size_hint();
         assert_eq!(Some(len), hi);
 
-        let cells = std::iter::once(Constant(F::zero())).chain(
+        let cells = std::iter::once(Constant(F::ZERO)).chain(
             a.zip(indicator.into_iter()).flat_map(|(a, ind)| {
                 let a = a.into();
                 sum = if ind.value().is_zero_vartime() { sum } else { *a.value() };
@@ -768,20 +768,20 @@ pub trait GateInstructions<F: ScalarField> {
     fn is_zero(&self, ctx: &mut Context<F>, a: AssignedValue<F>) -> AssignedValue<F> {
         let x = a.value();
         let (is_zero, inv) = if x.is_zero_vartime() {
-            (F::one(), Assigned::Trivial(F::one()))
+            (F::ONE, Assigned::Trivial(F::ONE))
         } else {
-            (F::zero(), Assigned::Rational(F::one(), *x))
+            (F::ZERO, Assigned::Rational(F::ONE, *x))
         };
 
         let cells = [
             Witness(is_zero),
             Existing(a),
             WitnessFraction(inv),
-            Constant(F::one()),
-            Constant(F::zero()),
+            Constant(F::ONE),
+            Constant(F::ZERO),
             Existing(a),
             Witness(is_zero),
-            Constant(F::zero()),
+            Constant(F::ZERO),
         ];
         ctx.assign_region_smart(cells, [0, 4], [(0, 6)], []);
         ctx.get(-2)
@@ -850,7 +850,7 @@ pub trait GateInstructions<F: ScalarField> {
             }
             // TODO: batch inversion
             let is_zero = self.is_zero(ctx, denom);
-            self.assert_is_const(ctx, &is_zero, &F::zero());
+            self.assert_is_const(ctx, &is_zero, &F::ZERO);
 
             // y_i / denom
             let quot = self.div_unsafe(ctx, coords[i].1, denom);
@@ -910,7 +910,7 @@ impl<F: ScalarField> GateChip<F> {
     pub fn new(strategy: GateStrategy) -> Self {
         let mut pow_of_two = Vec::with_capacity(F::NUM_BITS as usize);
         let two = F::from(2);
-        pow_of_two.push(F::one());
+        pow_of_two.push(F::ONE);
         pow_of_two.push(two);
         for _ in 2..F::NUM_BITS {
             pow_of_two.push(two * pow_of_two.last().unwrap());
@@ -922,7 +922,7 @@ impl<F: ScalarField> GateChip<F> {
 
     /// Calculates and constrains the inner product of `<a, b>`.
     ///
-    /// Returns `true` if `b` start with `Constant(F::one())`, and `false` otherwise.
+    /// Returns `true` if `b` start with `Constant(F::ONE)`, and `false` otherwise.
     ///
     /// Assumes `a` and `b` are the same length.
     /// * `ctx`: [Context] of the circuit
@@ -941,15 +941,15 @@ impl<F: ScalarField> GateChip<F> {
         let mut a = a.into_iter();
         let mut b = b.into_iter().peekable();
 
-        let b_starts_with_one = matches!(b.peek(), Some(Constant(c)) if c == &F::one());
+        let b_starts_with_one = matches!(b.peek(), Some(Constant(c)) if c == &F::ONE);
         let cells = if b_starts_with_one {
             b.next();
             let start_a = a.next().unwrap().into();
             sum = *start_a.value();
             iter::once(start_a)
         } else {
-            sum = F::zero();
-            iter::once(Constant(F::zero()))
+            sum = F::ZERO;
+            iter::once(Constant(F::ZERO))
         }
         .chain(a.zip(b).flat_map(|(a, b)| {
             let a = a.into();
@@ -1107,11 +1107,11 @@ impl<F: ScalarField> GateInstructions<F> for GateChip<F> {
         match self.strategy {
             GateStrategy::Vertical => {
                 // Create an iterator starting with `var` and
-                let (a, b): (Vec<_>, Vec<_>) = std::iter::once((var, Constant(F::one())))
+                let (a, b): (Vec<_>, Vec<_>) = std::iter::once((var, Constant(F::ONE)))
                     .chain(values.into_iter().filter_map(|(c, va, vb)| {
-                        if c == F::one() {
+                        if c == F::ONE {
                             Some((va, vb))
-                        } else if c != F::zero() {
+                        } else if c != F::ZERO {
                             let prod = self.mul(ctx, va, vb);
                             Some((QuantumCell::Existing(prod), Constant(c)))
                         } else {
@@ -1149,7 +1149,7 @@ impl<F: ScalarField> GateInstructions<F> for GateChip<F> {
             GateStrategy::Vertical => {
                 let cells = [
                     Witness(diff_val),
-                    Constant(F::one()),
+                    Constant(F::ONE),
                     b,
                     a,
                     b,
@@ -1181,20 +1181,20 @@ impl<F: ScalarField> GateInstructions<F> for GateChip<F> {
         let b = b.into();
         let c = c.into();
         let bc_val = *b.value() * c.value();
-        let not_bc_val = F::one() - bc_val;
-        let not_a_val = *a.value() - F::one();
+        let not_bc_val = F::ONE - bc_val;
+        let not_a_val = *a.value() - F::ONE;
         let out_val = bc_val + a.value() - bc_val * a.value();
         let cells = [
             Witness(not_bc_val),
             b,
             c,
-            Constant(F::one()),
+            Constant(F::ONE),
             Witness(not_a_val),
             Witness(not_bc_val),
             Witness(out_val),
             Witness(not_a_val),
-            Constant(F::one()),
-            Constant(F::one()),
+            Constant(F::ONE),
+            Constant(F::ONE),
             a,
         ];
         ctx.assign_region_smart(cells, [0, 3, 7], [(4, 7), (0, 5)], []);

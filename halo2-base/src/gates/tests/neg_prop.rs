@@ -1,14 +1,14 @@
 use std::env::set_var;
 
-use ff::Field;
 use itertools::Itertools;
 use num_bigint::BigUint;
 use proptest::{collection::vec, prelude::*};
 use rand::rngs::OsRng;
 
 use crate::halo2_proofs::{
+    arithmetic::Field,
     dev::MockProver,
-    halo2curves::{bn256::Fr, FieldExt},
+    halo2curves::bn256::Fr,
     plonk::Assigned,
 };
 use crate::{
