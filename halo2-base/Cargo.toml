@@ -52,7 +52,8 @@ display = []
 profile = ["halo2_proofs_axiom?/profile"]
 test-utils = ["dep:rand"]
 print-trace = ["halo2_proofs?/print-trace"]
-stats=["halo2_proofs?/stats", "halo2_proofs_axiom?/stats"]
+zkml = [halo2_proofs_axiom?/zkml]
+stats = ["halo2_proofs?/stats", "halo2_proofs_axiom?/stats"]
 
 [[bench]]
 name = "mul"
