@@ -79,7 +79,7 @@ impl<F: ScalarField, const T: usize, const RATE: usize> PoseidonState<F, T, RATE
             *x = gate.add(
                 ctx,
                 Existing(*x),
-                Constant(if i == 0 { F::one() + constant } else { *constant }),
+                Constant(if i == 0 { F::ONE + constant } else { *constant }),
             );
         }
     }
@@ -205,7 +205,7 @@ impl<F: ScalarField, const T: usize, const RATE: usize> PoseidonChip<F, T, RATE>
             self.state.sbox_full(ctx, gate, constants);
             self.state.apply_mds(ctx, gate, mds);
         }
-        self.state.sbox_full(ctx, gate, &[F::zero(); T]);
+        self.state.sbox_full(ctx, gate, &[F::ZERO; T]);
         self.state.apply_mds(ctx, gate, mds);
     }
 }
